@@ -15,10 +15,12 @@ fn main() {
     match matches.subcommand() {
         Some(("list", _)) => {
             // fetch tasks
-            let tasks = fetch_tasks().unwrap().unwrap_or_else(|| {
-                println!("You do not have any tasks yet!");
-                return vec![];
-            });
+            let tasks = fetch_tasks()
+                .expect("An IO error occured!")
+                .unwrap_or_else(|| {
+                    println!("You do not have any tasks yet!");
+                    return vec![];
+                });
 
             for task in tasks {
                 println!("Task: {:?}", task);
