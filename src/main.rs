@@ -5,7 +5,8 @@ fn main() {
     let matches = command!()
         .arg_required_else_help(true)
         .subcommand_required(true)
-        .subcommand(command!("list").about("Lists all your tasks"))
+        .subcommand(command!("list").about("See your list of tasks"))
+        .subcommand(command!("add").about("Add to your tasks list"))
         .get_matches();
 
     // sub-commands
@@ -20,9 +21,15 @@ fn main() {
                 });
 
             for task in tasks {
-                println!("Task: {:?}", task);
+                tasks_printer(&task, task.len());
             }
         }
+
+        // add a task
+        Some(("add", _)) => match add_tasks() {
+            Ok(_) => println!("Task written successfully!"),
+            Err(err) => println!("An IO error occurred! {:?}", err),
+        },
         _ => unreachable!("Exhausted list of subcommands"),
     }
 }
