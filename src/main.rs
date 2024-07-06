@@ -17,11 +17,13 @@ fn main() {
                 .expect("An IO error occured!")
                 .unwrap_or_else(|| {
                     println!("You do not have any tasks yet!");
-                    return vec![];
+                    vec![]
                 });
 
+            println!();
+
             for task in tasks {
-                tasks_printer(&task, task.len());
+                print_tasks(&task, task.len());
             }
         }
 
