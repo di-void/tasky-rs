@@ -7,6 +7,7 @@ fn main() {
         .subcommand_required(true)
         .subcommand(command!("list").about("See your list of tasks"))
         .subcommand(command!("add").about("Add to your tasks list"))
+        .subcommand(command!("edit").about("Edit a task in your list"))
         .get_matches();
 
     // sub-commands
@@ -32,6 +33,9 @@ fn main() {
             Ok(_) => println!("Task written successfully!"),
             Err(err) => println!("An IO error occurred! {:?}", err),
         },
+
+        // edit a task
+        Some(("edit", _)) => println!("Edit task :)"),
         _ => unreachable!("Exhausted list of subcommands"),
     }
 }
