@@ -35,7 +35,10 @@ fn main() {
         },
 
         // edit a task
-        Some(("edit", _)) => println!("Edit task :)"),
+        Some(("edit", _)) => match edit_task() {
+            Ok(_) => println!("Task updated successfully!"),
+            Err(err) => println!("An IO error occurred! {:?}", err),
+        },
         _ => unreachable!("Exhausted list of subcommands"),
     }
 }

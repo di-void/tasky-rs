@@ -1,4 +1,4 @@
-use csv::{self, StringRecord};
+use csv::{self, Result as CsvResult, StringRecord};
 use inquire::{validator::Validation, InquireError, Text};
 use std::{
     fs::{File, OpenOptions},
@@ -18,12 +18,8 @@ pub fn fetch_tasks() -> Result<Option<Vec<StringRecord>>> {
 
     match csv::Reader::from_path(FILE_PATH) {
         Ok(mut rdr) => {
-            let mut tasks = vec![];
-
-            for res in rdr.records() {
-                let record = res?;
-                tasks.push(record);
-            }
+            // let mut tasks = vec![];
+            let tasks: Vec<_> = rdr.records().collect::<CsvResult<_>>()?;
 
             if tasks.len() == 0 {
                 return Ok(None);
@@ -51,7 +47,10 @@ pub fn add_tasks() -> Result<()> {
 
     let mut record = vec![task_id];
 
-    let prompts = text_prompts("Enter the task name:", "How about a description:");
+    let prompts = text_prompts(vec![
+        "What's the name of the task?",
+        "How about a description?",
+    ]);
 
     for prompt in prompts {
         match prompt {
@@ -82,10 +81,19 @@ pub fn add_tasks() -> Result<()> {
     Ok(())
 }
 
-fn text_prompts(
-    task_name: &str,
-    task_desc: &str,
-) -> Vec<std::result::Result<String, InquireError>> {
+pub fn edit_task() -> Result<()> {
+    // prompt and get task id
+    // get the records from the file
+    // check if record with id exists
+    // if it doesn't exist, return and print error message
+    // if it does, prompt with name change,
+    // desc change and status change(options select)
+    // write changes to record in csv file
+    println!("Edit task :)");
+    Ok(())
+}
+
+fn text_prompts(txt_prompts: Vec<&str>) -> Vec<std::result::Result<String, InquireError>> {
     let validator = |input: &str| {
         if input.chars().count() > 140 {
             Ok(Validation::Invalid("Too much text boss.".into()))
@@ -97,9 +105,8 @@ fn text_prompts(
     };
 
     let mut prompts = vec![];
-    let msgs = [task_name, task_desc];
 
-    for msg in msgs {
+    for msg in txt_prompts {
         let txt_prmpt = Text::new(msg)
             .with_default("")
             .with_validator(validator)
