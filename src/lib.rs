@@ -18,7 +18,6 @@ pub fn fetch_tasks() -> Result<Option<Vec<StringRecord>>> {
 
     match csv::Reader::from_path(FILE_PATH) {
         Ok(mut rdr) => {
-            // let mut tasks = vec![];
             let tasks: Vec<_> = rdr.records().collect::<CsvResult<_>>()?;
 
             if tasks.len() == 0 {
