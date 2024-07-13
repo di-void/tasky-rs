@@ -57,7 +57,7 @@ pub fn print_tasks(record: &StringRecord, fields_len: usize) {
     for i in 0..fields_len {
         let field_record = record.get(i).unwrap();
 
-        println!("{:?}: {:?}", HEADERS[i], field_record);
+        println!("{}: {}", HEADERS[i], field_record);
     }
 
     println!("\n");
