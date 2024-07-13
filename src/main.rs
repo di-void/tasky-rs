@@ -8,6 +8,7 @@ fn main() {
         .subcommand(command!("list").about("See your list of tasks"))
         .subcommand(command!("add").about("Add to your tasks list"))
         .subcommand(command!("edit").about("Edit a task in your list"))
+        .subcommand(command!("delete").about("Delete a task from your list"))
         .get_matches();
 
     // sub-commands
@@ -24,7 +25,7 @@ fn main() {
             println!();
 
             for task in tasks {
-                print_tasks(&task, task.len());
+                utils::print_tasks(&task, task.len());
             }
         }
 
@@ -39,6 +40,10 @@ fn main() {
             Ok(_) => println!("Task updated successfully!"),
             Err(err) => println!("An error occurred! {:?}", err),
         },
+
+        // delete a task
+        Some(("delete", _)) => delete_task(),
+
         _ => unreachable!("Exhausted list of subcommands"),
     }
 }

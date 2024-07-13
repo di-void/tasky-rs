@@ -1,22 +1,9 @@
+pub mod utils;
 use csv::{self, Result as CsvResult, StringRecord};
-use inquire::{validator::Validation, InquireError, Select, Text};
-use std::{
-    fs::{File, OpenOptions},
-    io::{self, Error as IOError, ErrorKind, Result as ioResult},
-};
+use inquire::{InquireError, Select};
+use std::io::{self, Error as IOError, ErrorKind, Result as ioResult};
+use utils::{find_record, get_file, text_prompts, FILE_PATH, HEADERS};
 use uuid::Uuid;
-
-const FILE_PATH: &str = "tasks.txt";
-const HEADERS: [&str; 4] = ["Id", "Name", "Description", "Status"];
-
-fn get_file(append: bool, truncate: bool) -> ioResult<File> {
-    OpenOptions::new()
-        .append(append)
-        .truncate(truncate)
-        .write(true)
-        .create(true)
-        .open(FILE_PATH)
-}
 
 pub fn fetch_tasks() -> ioResult<Option<Vec<StringRecord>>> {
     println!("Getting tasks...");
@@ -100,11 +87,7 @@ pub fn edit_task() -> Result<(), InquireError> {
             let tasks = fetch_tasks().expect("An IO error occured!");
 
             if let Some(records) = tasks {
-                if let Some((idx, record)) = records
-                    .iter()
-                    .enumerate()
-                    .find(|(_, r)| r.iter().collect::<Vec<_>>()[0] == id)
-                {
+                if let Some((idx, record)) = find_record(&records, id) {
                     let name = record.get(1).unwrap_or("");
                     let desc = record.get(2).unwrap_or("");
                     let status = record.get(3).unwrap_or("Pending");
@@ -153,7 +136,7 @@ pub fn edit_task() -> Result<(), InquireError> {
 
                             wtr.flush()?;
                         }
-                        Err(err) => println!("An error occured!: {:?}", err),
+                        Err(err) => panic!("An error occured!: {:?}", err),
                     }
                 } else {
                     return Err(InquireError::IO(IOError::new(
@@ -169,38 +152,42 @@ pub fn edit_task() -> Result<(), InquireError> {
     Ok(())
 }
 
-// Vec<(prompt, default)>
-fn text_prompts(txt_prompts: Vec<(&str, &str)>) -> Vec<Result<String, InquireError>> {
-    let validator = |input: &str| {
-        if input.chars().count() > 140 {
-            Ok(Validation::Invalid("Too much text boss.".into()))
-        } else if input.trim() == "" {
-            Ok(Validation::Invalid("Stop playing boss.".into()))
-        } else {
-            Ok(Validation::Valid)
+pub fn delete_task() {
+    let prompts = text_prompts(vec![("What's the task id?", "")]);
+
+    match &prompts[0] {
+        Ok(id) => {
+            let tasks = fetch_tasks().expect("An IO error occured!");
+
+            if let Some(records) = tasks {
+                match find_record(&records, id) {
+                    Some(_) => {
+                        // filter
+                        let new_records = records
+                            .iter()
+                            .filter(|&rec| rec.get(0).unwrap_or("") != id)
+                            .collect::<Vec<_>>();
+
+                        let fh = get_file(false, true).expect("Cound't get file");
+                        let mut wtr = csv::Writer::from_writer(fh);
+
+                        wtr.write_record(&HEADERS).expect("Couldn't write reecord!");
+
+                        for record in new_records {
+                            wtr.write_record(record).expect("Couldn't write record");
+                        }
+
+                        wtr.flush().expect("Cound't flush writer buffer");
+
+                        println!("Task deleted successfully!");
+                    }
+
+                    None => println!("Task Not Found!"),
+                }
+            }
         }
-    };
 
-    let mut prompts = vec![];
-
-    for msg in txt_prompts {
-        let txt_prmpt = Text::new(msg.0)
-            .with_default(msg.1)
-            .with_validator(validator)
-            .prompt();
-
-        prompts.push(txt_prmpt)
+        // i'm too tired
+        Err(err) => panic!("Error during inquiry: {:?}", err),
     }
-
-    prompts
-}
-
-pub fn print_tasks(record: &StringRecord, fields_len: usize) {
-    for i in 0..fields_len {
-        let field_record = record.get(i).unwrap();
-
-        println!("{:?}: {:?}", HEADERS[i], field_record);
-    }
-
-    println!("\n");
 }
